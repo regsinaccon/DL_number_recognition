@@ -23,12 +23,10 @@ print("Testing data shape:", testX.shape)
 batchsize = 10
 iteration = 10
 
-w1 = numpy.random.randn(128,784)/numpy.sqrt(758/2)
-w2 = numpy.random.randn(10,128)/numpy.sqrt(129/2)
+w1 = numpy.random.randn(128,784+1)/numpy.sqrt(758/2)
+w2 = numpy.random.randn(10,128+1)/numpy.sqrt(129/2)
 
-'''
-abc ... is the spot on different layer
-'''
+
 
 
 # print(trainX[0])
@@ -40,9 +38,15 @@ for times in range(iteration):
         # encode the current number
         current_code = one_hot_encoder(TrainNum[i])
         # pass the input vector to the first fatrix
+        Append_one(TrainImg[i])
         a = val_pass_weight(TrainImg[i],w1)
         # pass through activation function with bias
-        a = sigmoid(a)
-
-        b = val_pass_weight(a,w2) 
-        Deviation_Code = Deviation_of(current_code,b)
+        b = sigmoid(a)
+        Append_one(b)
+        # pass the second fatrix
+        u = val_pass_weight(b,w2)
+        # pass through activation funtion and u is the estimation
+        y = softmax(u) 
+        Deviation_Code = Deviation_of(current_code,y)
+        print(Deviation_Code)       #
+                

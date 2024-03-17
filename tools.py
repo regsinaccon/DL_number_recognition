@@ -1,7 +1,8 @@
 import numpy
 import math 
 import random
-
+import numba
+@numba.jit
 def dot(vector1,vector2):
     sum = 0
     for column in range(len(vector1)):
@@ -41,12 +42,32 @@ def one_hot_encoder(Num):
     return encoded
 # 
 def Deviation_of(expected_code,pridict_code):
-    return expected_code-pridict_code
+    return pridict_code-expected_code
 # 
 
 # def Pridict_acc()
 
-# @numba.jit(nopython=True)
+
+
+# maybe not so useful in b deviation
+def Sigma(*args):
+    sum = 0
+    for num in args:
+        sum += num
+    return sum
+
+
+
+@numba.jit(nopython=True)
 def Append_one(vector):
     vector = numpy.append(vector,1)
     return vector
+
+'''
+unfinished function
+'''
+def Deviation_b(Deviation_Code,w2):
+    r = numpy.zeros((129,))
+    for i in range(129):
+        for j in range(10):
+            pass
