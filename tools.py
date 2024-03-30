@@ -17,30 +17,30 @@ def val_pass_weight(input_vector,weight_squar):
         return_vector[i]=dot(input_vector,weight_squar[i])
     return return_vector
 
-def softmax(vector):
-    denominator = 0
-    for i in range(len(vector)):
-        denominator += math.exp(vector[i])
-    for i in range(len(vector)):
-        vector[i] = vector[i]/denominator
-    return vector 
-def sigmoid(vector):
-    max_val = max(vector)
-    r = numpy.zeros((len(vector),))
-    for index in range(len(vector)):
-        r[index] = vector[index] - max_val
-    for i in range(len(vector)):
-        r[i] = 1/(1+math.exp(r[i]*-1))
+# pp soft mss
+def softmax(x):
+    x = x.T
+    x_max = x.max(axis=0)
+    x = x - x_max
+    w = numpy.exp(x)
+    return (w / w.sum(axis=0)).T
+    
+def sigmoid(num):
+    return 1/(1+numpy.exp(-num))
+def one_hot_encoder(muti_vector):
+    rows = len(muti_vector)
+    r = numpy.zeros((rows,10))
+    for row in range(rows):
+        number = muti_vector[row]
+        r[row][number] = 1
     return r
-def one_hot_encoder(Num):
-
-    encoded = numpy.zeros((10,))
-    encoded[Num] = 1
-    return encoded
+    
  
 def Deviation_of(expected_code,pridict_code):
     return pridict_code-expected_code
  
+
+@numba.jit
 def Return_Num(vector):
     max_val = -1000
     the_index = 0
@@ -53,29 +53,25 @@ def Return_Num(vector):
 
 
 
-# the testx contains only 128 column while w1 has 129 column and so does the things in the hidden layer
-# cause dot error
 def Predict_acc(testx,testy,w1,w2,test_size):
     acc = 0
     for i in range(test_size):
-        Img = numpy.append(testx[i],1)
-        a = val_pass_weight(Img,w1)
-        a = sigmoid(a)
-        b = numpy.append(a,1)
-        b = val_pass_weight(b,w2)
-        b = softmax(b)
-        Number = Return_Num(b)
+        Img = testx[i]
+        a = Img @ w1
+        b = sigmoid(a)
+        b1 = numpy.insert(b, 0, 1)
+        u = b1 @ w2
+        yp = softmax(u)
+        Number = numpy.argmax(yp)
+
         if Number == testy[i]:
             acc +=1
     return acc/test_size
 
 
-@numba.jit(nopython=True)
-def Append_one(vector):
-    vector = numpy.append(vector,1)
-    return vector
 
 
+@numba.jit
 def Deviation_b(Deviation_Code,w2,b):
     r = numpy.zeros((129,))
     for i in range(129):
@@ -84,6 +80,16 @@ def Deviation_b(Deviation_Code,w2,b):
             tmp_sum += Deviation_Code[j]*w2[j][i]
         r[i] = b[i]*(1-b[i])*tmp_sum
     return r
+@numba.jit
+def revise_w2(w2_chage,b,Deviation_Code):
+    for i in range(10):
+        for j in range(1,129):
+            w2_chage[i][j] +=b[j]*Deviation_Code[i]
+@numba.jit
+def revise_w1(w1_chage,Img,D_b):
+    for i in range(128):
+        for j in range(785):
+            w1_chage[i][j] += Img[j]*D_b[i]
 
-def revise_w1():
-    pass
+
+# one hot matching

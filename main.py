@@ -15,38 +15,42 @@ testX = testX.astype('float32') / 255
 trainX = trainX.reshape((trainX.shape[0], -1))
 testX = testX.reshape((testX.shape[0], -1))
 
+
+
+
 # check the shapes
 print("Training data shape:", trainX.shape)
 print("Testing data shape:", testX.shape)
 
 
-batchsize = 10
-iteration = 10
+batchsize = 512
+iteration = 50
+learning_rate = 0.01
 
-w1 = numpy.random.randn(128,784+1)/numpy.sqrt(758/2)
-w2 = numpy.random.randn(10,128+1)/numpy.sqrt(129/2)
+
+w1 = numpy.random.randn(784,128)/numpy.sqrt(784/2)
+w2 = numpy.random.randn(129,10)/numpy.sqrt(129/2)
 
 
 
 
 # print(trainX[0])
 for times in range(iteration):
+    print(Predict_acc(testX,testy,w1,w2,100))
     TrainImg = trainX[times:(times+1)*batchsize]
     TrainNum = trainy[times:(times+1)*batchsize]
-    
-    for i in range(batchsize):
-        # encode the current number
-        current_code = one_hot_encoder(TrainNum[i])
-        # pass the input vector to the first fatrix
-        Append_one(TrainImg[i])
-        a = val_pass_weight(TrainImg[i],w1)
-        # pass through activation function with bias
-        b = sigmoid(a)
-        Append_one(b)
-        # pass the second fatrix
-        u = val_pass_weight(b,w2)
-        # pass through activation funtion and u is the estimation
-        y = softmax(u) 
-        Deviation_Code = Deviation_of(current_code,y)
-        print(Deviation_Code)       #
-                
+    yt = one_hot_encoder(TrainNum)
+    a = TrainImg @ w1
+    b = sigmoid(a)
+    b1 = numpy.insert(b, 0, 1, axis=1)   
+    u = b1 @ w2                         
+    yp = softmax(u)
+    yd = yp - yt                      
+    bd = b * (1-b) * (yd @ w2[1:].T)  
+
+    w2 = w2 - learning_rate * (b1.T @ yd) / batchsize   
+    w1 = w1 - learning_rate * (TrainImg.T @ bd) / batchsize
+     
+
+
+
