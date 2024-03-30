@@ -36,7 +36,7 @@ w2 = numpy.random.randn(129,10)/numpy.sqrt(129/2)
 
 # print(trainX[0])
 for times in range(iteration):
-    print(Predict_acc(testX,testy,w1,w2,100))
+    print(f'accuracy is {Predict_acc(testX,testy,w1,w2,100)*100:.2f}percent')
     TrainImg = trainX[times:(times+1)*batchsize]
     TrainNum = trainy[times:(times+1)*batchsize]
     yt = one_hot_encoder(TrainNum)
