@@ -24,22 +24,23 @@ print("Testing data shape:", testX.shape)
 
 
 batchsize = 512
-iteration = 50
-learning_rate = 0.01
-LRedit = 0
-
+iteration = 80
+learning_rate = 0.3
+Decay = 0.9
 w1 = numpy.random.randn(784,128)/numpy.sqrt(784/2)
 w2 = numpy.random.randn(129,10)/numpy.sqrt(129/2)
-
+w1_prev = w1
+w2_prev = w2
 
 
 momentum1 = 0
 momentum2 = 0
 
-
+history = []
+yaxis = list(range(0,iteration))
 # print(trainX[0])
 for times in range(iteration):
-    print(Predict_acc(testX,testy,w1,w2,100))
+
     TrainImg = trainX[times:(times+1)*batchsize]
     TrainNum = trainy[times:(times+1)*batchsize]
     yt = one_hot_encoder(TrainNum)
@@ -50,11 +51,25 @@ for times in range(iteration):
     yp = softmax(u)
     yd = yp - yt                      
     bd = b * (1-b) * (yd @ w2[1:].T)  
-    
-    w2 = w2 - learning_rate * (b1.T @ yd) / batchsize   
-    w1 = w1 - learning_rate * (TrainImg.T @ bd) / batchsize
-    momentum1 = -learning_rate * (TrainImg.T @ bd) / batchsize
-    momentum2 = -learning_rate * (b1.T @ yd) / batchsize
+
+    G2 = b1.T @ yd
+    G1 = TrainImg.T @ bd
+    w1_prev = w1
+    w2_prev = w2
+    w2 = w2 - (learning_rate) * (G2 + momentum2) / batchsize   
+    w1 = w1 - (learning_rate) * (G1 + momentum1 )/ batchsize
+    momentum1 = (G1)
+    momentum2 = (G2)
+    acc = Predict_acc(testX,testy,w1,w2,100)
+    history.append(acc)
+    if history[-1]<history[-2]:
+        w1 = w1_prev
+        w2 = w2_prev
+        learning_rate *= Decay
 
 
 
+
+plt.plot(yaxis,history)
+plt.show()
+print(acc)
