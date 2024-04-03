@@ -44,8 +44,8 @@ yaxis = list(range(0,iteration))
 # print(trainX[0])
 for times in range(iteration):
 
-    TrainImg = trainX[times:(times+1)*batchsize]
-    TrainNum = trainy[times:(times+1)*batchsize]
+    TrainImg = trainX[times*batchsize:(times+1)*batchsize]
+    TrainNum = trainy[times*batchsize:(times+1)*batchsize]
     yt = one_hot_encoder(TrainNum)
     a = TrainImg @ w1
     b = sigmoid(a)
