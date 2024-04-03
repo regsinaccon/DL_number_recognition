@@ -76,6 +76,8 @@ numpy.savetxt("weight1.csv",w1,delimiter=",")
 numpy.savetxt("weight2.csv",w2,delimiter=",")
 
 plt.plot(yaxis,history[1:])
+plt.xlabel('Iteration')
+plt.ylabel('Accuracy')
 plt.show()
 print(acc)
 print(learning_rate)

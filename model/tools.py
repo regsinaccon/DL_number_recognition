@@ -10,12 +10,7 @@ def dot(vector1,vector2):
     return sum
 
 
-def val_pass_weight(input_vector,weight_squar):
-    rows = weight_squar.shape[0]
-    return_vector = numpy.zeros((rows,))
-    for i in range(rows):
-        return_vector[i]=dot(input_vector,weight_squar[i])
-    return return_vector
+
 
 # pp soft mss
 def softmax(x):
@@ -36,20 +31,16 @@ def one_hot_encoder(muti_vector):
     return r
 
 
-def Deviation_of(expected_code,pridict_code):
-    return pridict_code-expected_code
 
 
-@numba.jit
-def Return_Num(vector):
-    max_val = -1000
-    the_index = 0
-    for i in range(len(vector)):
-        if vector[i]>max_val:
-            max_val = vector[i]
-            the_index = i
-    return the_index
-
+def Return_Num(Img,w1,w2):
+    a = Img @ w1
+    b = sigmoid(a)
+    b1 = numpy.insert(b, 0, 1)
+    u = b1 @ w2
+    yp = softmax(u)
+    Number = numpy.argmax(yp)
+    return Number
 
 
 
@@ -80,16 +71,6 @@ def Deviation_b(Deviation_Code,w2,b):
             tmp_sum += Deviation_Code[j]*w2[j][i]
         r[i] = b[i]*(1-b[i])*tmp_sum
     return r
-@numba.jit
-def revise_w2(w2_chage,b,Deviation_Code):
-    for i in range(10):
-        for j in range(1,129):
-            w2_chage[i][j] +=b[j]*Deviation_Code[i]
-@numba.jit
-def revise_w1(w1_chage,Img,D_b):
-    for i in range(128):
-        for j in range(785):
-            w1_chage[i][j] += Img[j]*D_b[i]
 
 
 def Rate_editor(Gradinet,Last_Gradient,alpha = 0.3):
