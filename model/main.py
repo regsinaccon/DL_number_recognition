@@ -38,7 +38,7 @@ w2_prev = w2
 
 momentum1 = 0
 momentum2 = 0
-
+loss = [0]
 history = [0]
 yaxis = list(range(0,iteration))
 # print(trainX[0])

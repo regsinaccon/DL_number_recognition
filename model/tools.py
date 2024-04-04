@@ -79,7 +79,7 @@ def Rate_editor(Gradinet,Last_Gradient,alpha = 0.3):
     return numpy.sqrt(alpha*numpy.sum(Lg)+(1-alpha)*numpy.sum(g))
 @numba.jit
 def Inrange(index):
-    if index <= 784 and index >= 0:
+    if index < 784 and index >= 0:
         return True
     else:
         return False
@@ -88,9 +88,9 @@ def Inrange(index):
 @numba.jit
 def Convolution(Img):
     steps = [-29,-28,-27,-1,0,1,27,28,29]
-    kernel = [-1,-1,-1,
-          -1,8,-1,
-          -1,-1,-1]
+    kernel = [2,-1,-1,
+            -1,2,-1,
+             -1,-1,2]
     r = numpy.zeros((Img.shape[0],784))
     for index in range(Img.shape[0]):
         for i in range(784):
@@ -98,5 +98,21 @@ def Convolution(Img):
               if Inrange(i+steps[j]):
                 r[index][i] += Img[index][i+steps[j]]*kernel[j]
               else:
+                continue
+    return r
+
+
+def one_con(Img):
+    steps = [-29,-28,-27,-1,0,1,27,28,29]
+    kernel = [2,-1,-1,
+            -1,2,-1,
+             -1,-1,2]
+    r = numpy.zeros((784,))
+    for i in range(784):
+        for j in range(9):
+            if Inrange(i+steps[j]):
+                r[i] +=Img[i+steps[j]]*kernel[j]
+                # r[index][i] += Img[index][i+steps[j]]*kernel[j]
+            else:
                 continue
     return r
