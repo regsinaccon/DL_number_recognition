@@ -75,7 +75,8 @@ for times in range(iteration):
       learning_rate *= enlarge
 
 
-
+numpy.savetxt("weight1.csv",w1,delimiter=",")
+numpy.savetxt("weight2.csv",w2,delimiter=",")
 
 
 plt.plot(yaxis,history[1:])
