@@ -100,6 +100,8 @@ class Model():
     def Show(self):
         yaxis = list(range(0,self.Iteration))
         plt.plot(yaxis,self.history[1:])
+        plt.yticks(numpy.arange(0, 100, 5))
+        plt.grid(True)
         plt.xlabel('Iteration')
         plt.ylabel('Accuracy')
         plt.show()
