@@ -92,9 +92,17 @@ class Model():
                 self.w2 = w2_prev
                 self.learning_rate *= self.Decay
             else:
-                self.learning_rate *= self.Enlarge
-        return self.history   
-
+                self.learning_rate *= self.Enlarge   
+        return (self.w1,self.w2,self.history)
+    def Store_weight(self):
+        numpy.savetxt("weight1.csv",self.w1,delimiter=",")
+        numpy.savetxt("weight2.csv",self.w2,delimiter=",")
+    def Show(self):
+        yaxis = list(range(0,self.Iteration))
+        plt.plot(yaxis,self.history[1:])
+        plt.xlabel('Iteration')
+        plt.ylabel('Accuracy')
+        plt.show()
 @numba.jit
 def Convolution(Picture):
     steps = [-29,-28,-27,-1,0,1,27,28,29]
