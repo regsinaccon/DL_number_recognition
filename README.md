@@ -1,6 +1,6 @@
 # DL_number_recognition
 # Introduction
-This is a pure math made digit recognition model (in model folder) .In the app folder is a drawing pad made with tkinter that allows users to  sent their drawings to the pridiction model.The check.py(in model folder ) can let us see the testing image data and the pridiction all together at the same window by enter the desire data index.
+This is a pure math made digit recognition model (in model folder) .In the app folder is a drawing pad made with tkinter that allows users to  sent their drawings to the pridiction model.The check.py(in model folder ) can let us see the testing image data and the pridiction all together at the same window by enter the desire data index.Inside New_model folder is the latest version which is the faster and accurate one . 
 # Installation
 ### Option 1
 Assume that you have python(Python 3.11.3 is the developing env) installed .There are four required package to install inorder to run all the files.You can use the following command on the terminal to install those packages 
