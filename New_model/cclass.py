@@ -9,7 +9,7 @@ import numba
 
 
 class Model():
-    def  __init__(self,Iteration,batchsize=512,learning_rate=0.01,momentum=(True,1),DLR=(True,(0.94,1.05)),convolution = True):
+    def  __init__(self,Iteration,batchsize=512,learning_rate=0.01,momentum=(True,0.5),DLR=(True,(0.94,1.05)),convolution = False):
         (self.trainImgs,self.trainlable),(self.testImgs, self.testlable) = mnist.load_data()
         self.trainImgs = self.trainImgs.astype('float32') / 255
         self.testImgs = self.testImgs.astype('float32') / 255
@@ -24,9 +24,10 @@ class Model():
         if convolution == True:
             self.trainImgs = Convolution(self.trainImgs)
             self.testImgs = Convolution(self.testImgs)
-        if momentum[0] == True:
-            self.momentum1 = 0
-            self.momentum2 = 0
+        self.HasMomentum = momentum[0]
+        self.momentum1 = 0
+        self.momentum2 = 0
+        self.momentumDecay = momentum[1]
         if DLR[0] == True:
             self.learning_rate = 0.4
             self.Decay = DLR[1][0]
@@ -83,8 +84,9 @@ class Model():
             w2_prev = self.w2
             self.w2 = self.w2 - (self.learning_rate) * (G2 + self.momentum2) / self.batchsize
             self.w1 = self.w1 - (self.learning_rate) * (G1 + self.momentum1)/ self.batchsize
-            self.momentum1 = (G1)
-            self.momentum2 = (G2)
+            if self.HasMomentum == True:
+                self.momentum1 = (G1)*self.momentumDecay
+                self.momentum2 = (G2)*self.momentumDecay
             Accuracy = self.Predict_acc()
             self.history.append(Accuracy)
             if self.history[-1]<self.history[-2]:
@@ -93,7 +95,6 @@ class Model():
                 self.learning_rate *= self.Decay
             else:
                 self.learning_rate *= self.Enlarge   
-        return (self.w1,self.w2,self.history)
     def Store_weight(self):
         numpy.savetxt("weight1.csv",self.w1,delimiter=",")
         numpy.savetxt("weight2.csv",self.w2,delimiter=",")
@@ -101,9 +102,10 @@ class Model():
         yaxis = list(range(0,self.Iteration))
         plt.plot(yaxis,self.history[1:])
         plt.yticks(numpy.arange(0, 100, 5))
+        plt.xticks(numpy.arange(0,self.Iteration+20,20))
         plt.grid(True)
         plt.xlabel('Iteration')
-        plt.ylabel('Accuracy')
+        plt.ylabel('Accuracy(%)')
         plt.show()
 @numba.jit
 def Convolution(Picture):
