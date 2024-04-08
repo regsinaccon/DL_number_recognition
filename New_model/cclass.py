@@ -13,6 +13,7 @@ class Model():
         (self.trainImgs,self.trainlable),(self.testImgs, self.testlable) = mnist.load_data()
         self.trainImgs = self.trainImgs.astype('float32') / 255
         self.testImgs = self.testImgs.astype('float32') / 255
+        self.testImgs_store = self.testImgs
         self.trainImgs = self.trainImgs.reshape((self.trainImgs.shape[0], -1))
         self.testImgs = self.testImgs.reshape((self.testImgs.shape[0], -1))
         self.Iteration = Iteration
@@ -107,17 +108,21 @@ class Model():
         plt.xlabel('Iteration')
         plt.ylabel('Accuracy(%)')
         plt.show()
-    def check(self,index):
-        a = self.testImgs[index] @ self.w1
-        b = self.sigmoid(a)
-        b1 = numpy.insert(b,0,1,axis=0)
-        u = b1 @ self.w2
-        yp = self.softmax(u)
-        number = numpy.argmax(yp)
-        showimg = self.testImgs[index].reshape((28,28))
-        plt.imshow(showimg, cmap=plt.cm.binary)
-        plt.xlabel(f"True digit: {self.testlable[index]}, Pridict number: {number}")
-        plt.show()
+    def check(self):
+        while True:
+            index = int(input('enter an index:'))
+            if index>1000 or index<0:
+                print('process terminated')
+                break
+            a = self.testImgs[index] @ self.w1
+            b = self.sigmoid(a)
+            b1 = numpy.insert(b,0,1,axis=0)
+            u = b1 @ self.w2
+            yp = self.softmax(u)
+            number = numpy.argmax(yp)
+            plt.imshow(self.testImgs_store[index], cmap=plt.cm.binary)
+            plt.xlabel(f"True digit: {self.testlable[index]}, Pridict number: {number}")
+            plt.show()
 
 @numba.jit
 def Convolution(Picture):
