@@ -94,10 +94,10 @@ class Model():
                 self.w2 = w2_prev
                 self.learning_rate *= self.Decay
             else:
-                self.learning_rate *= self.Enlarge   
+                self.learning_rate *= self.Enlarge 
     def Store_weight(self):
-        numpy.savetxt("weight1.csv",self.w1,delimiter=",")
-        numpy.savetxt("weight2.csv",self.w2,delimiter=",")
+        numpy.savetxt("weight11.csv",self.w1,delimiter=",")
+        numpy.savetxt("weight21.csv",self.w2,delimiter=",")
     def Show(self):
         yaxis = list(range(0,self.Iteration))
         plt.plot(yaxis,self.history[1:])
@@ -107,6 +107,18 @@ class Model():
         plt.xlabel('Iteration')
         plt.ylabel('Accuracy(%)')
         plt.show()
+    def check(self,index):
+        a = self.testImgs[index] @ self.w1
+        b = self.sigmoid(a)
+        b1 = numpy.insert(b,0,1,axis=0)
+        u = b1 @ self.w2
+        yp = self.softmax(u)
+        number = numpy.argmax(yp)
+        showimg = self.testImgs[index].reshape((28,28))
+        plt.imshow(showimg, cmap=plt.cm.binary)
+        plt.xlabel(f"True digit: {self.testlable[index]}, Pridict number: {number}")
+        plt.show()
+
 @numba.jit
 def Convolution(Picture):
     steps = [-29,-28,-27,-1,0,1,27,28,29]
