@@ -4,12 +4,12 @@ import numpy
 import random
 from matplotlib import pyplot as plt
 import numba
-
+# import itertools
 
 
 
 class Model():
-    def  __init__(self,Iteration,batchsize=512,learning_rate=0.01,momentum=(True,0.5),DLR=(True,(0.94,1.05)),convolution = False):
+    def  __init__(self,Iteration,batchsize=512,learning_rate=0.01,momentum=(True,0.5),DLR=True,convolution = True):
         (self.trainImgs,self.trainlable),(self.testImgs, self.testlable) = mnist.load_data()
         self.trainImgs = self.trainImgs.astype('float32') / 255
         self.testImgs = self.testImgs.astype('float32') / 255
@@ -29,13 +29,16 @@ class Model():
         self.momentum1 = 0
         self.momentum2 = 0
         self.momentumDecay = momentum[1]
-        if DLR[0] == True:
+        self.update = True
+        self.loss = [0]
+        if DLR == True:
             self.learning_rate = 0.4
-            self.Decay = DLR[1][0]
-            self.Enlarge = DLR[1][1]
+            self.Decay = 0.94
+            self.Enlarge = 1.05
         else:
             self.Decay = 1
             self.Enlarge = 1
+        print('data loaded')
     def one_hot_encoder(self,vector):
         rows = len(vector)
         r = numpy.zeros((rows,10))
@@ -67,6 +70,7 @@ class Model():
         return acc/5
     
     def Train(self):
+        print('training ')
         for i in range(self.Iteration):
             randinter = random.randint(1,59000)
             Imgs = self.trainImgs[randinter:randinter+self.batchsize]
@@ -78,11 +82,12 @@ class Model():
             yp = self.softmax(u)
             yd = yp - Lables
             bd = b * (1-b) * (yd @ self.w2[1:].T)
-
+            self.cross_entropy(Lables,yp)
             G2 = b1.T @ yd
             G1 = Imgs.T @ bd
-            w1_prev = self.w1
-            w2_prev = self.w2
+            if self.update:
+                w1_prev = self.w1
+                w2_prev = self.w2
             self.w2 = self.w2 - (self.learning_rate) * (G2 + self.momentum2) / self.batchsize
             self.w1 = self.w1 - (self.learning_rate) * (G1 + self.momentum1)/ self.batchsize
             if self.HasMomentum == True:
@@ -94,20 +99,32 @@ class Model():
                 self.w1 = w1_prev
                 self.w2 = w2_prev
                 self.learning_rate *= self.Decay
+                self.update = False
             else:
                 self.learning_rate *= self.Enlarge 
+                self.update = True
     def Store_weight(self):
         numpy.savetxt("weight11.csv",self.w1,delimiter=",")
         numpy.savetxt("weight21.csv",self.w2,delimiter=",")
-    def Show(self):
-        yaxis = list(range(0,self.Iteration))
-        plt.plot(yaxis,self.history[1:])
-        plt.yticks(numpy.arange(0, 100, 5))
-        plt.xticks(numpy.arange(0,self.Iteration+20,20))
-        plt.grid(True)
-        plt.xlabel('Iteration')
-        plt.ylabel('Accuracy(%)')
-        plt.show()
+    def Show(self,option):
+        if option=='accuracy':
+            yaxis = list(range(0,self.Iteration))
+            plt.plot(yaxis,self.history[1:])
+            plt.yticks(numpy.arange(0, 100, 5))
+            plt.xticks(numpy.arange(0,self.Iteration+20,20))
+            plt.grid(True)
+            plt.xlabel('Iteration')
+            plt.ylabel('Accuracy(%)')
+            plt.show()
+        if option == 'loss':
+            yaxis = list(range(0,self.Iteration))
+            plt.plot(yaxis,self.loss[1:])
+            plt.yticks(numpy.arange(0, numpy.max(self.loss), 0.1))
+            plt.xticks(numpy.arange(0,self.Iteration+20,20))
+            plt.grid(True)
+            plt.xlabel('Iteration')
+            plt.ylabel('Loss')
+            plt.show()
     def check(self):
         while True:
             index = int(input('enter an index:'))
@@ -121,8 +138,18 @@ class Model():
             yp = self.softmax(u)
             number = numpy.argmax(yp)
             plt.imshow(self.testImgs_store[index], cmap=plt.cm.binary)
-            plt.xlabel(f"True digit: {self.testlable[index]}, Pridict number: {number}")
+            plt.xlabel(f"True digit: {self.testlable[index]}, Pridict number is: {number}")
             plt.show()
+    
+    def cross_entropy(self,y_true, y_pred):
+        samples = y_true.shape[0]
+        logp = - numpy.log(y_pred[numpy.arange(samples), y_true.argmax(axis=1)])
+        lossv = numpy.sum(logp)/samples
+        self.loss.append(lossv)
+
+
+
+
 
 @numba.jit
 def Convolution(Picture):
