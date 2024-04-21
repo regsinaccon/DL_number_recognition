@@ -120,11 +120,16 @@ class Model():
             plt.ylabel('Loss')
             plt.show()
     def check(self):
+        digits = [[] for _ in range(10)]
+        for i in range(len(self.testlable)):
+            digits[self.testlable[i]].append(i)
         while True:
-            index = int(input('enter an index:'))
-            if index>1000 or index<0:
+            index = int(input('enter the digit:'))
+            if index>9 or index<0:
                 print('process terminated')
                 break
+            index = digits[index][random.randint(0,len(digits[index])-1)]
+
             a = self.testImgs[index] @ self.w1
             b = self.sigmoid(a)
             b1 = numpy.insert(b,0,1,axis=0)
