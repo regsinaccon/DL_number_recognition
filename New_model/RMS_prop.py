@@ -8,7 +8,7 @@ import numba
 
 
 class Model():
-    def  __init__(self,Iteration:int,batchsize=512,learning_rate=2,momentum=(True,0.5),convolution = True,alpha=0.1):
+    def  __init__(self,Iteration:int,batchsize=512,learning_rate=0.9,momentum=(True,0.5),convolution = True,alpha=0.1):
         (self.trainImgs,self.trainlable),(self.testImgs, self.testlable) = mnist.load_data()
         self.trainImgs = self.trainImgs.astype('float32') / 255
         self.testImgs = self.testImgs.astype('float32') / 255
