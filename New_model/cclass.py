@@ -1,15 +1,16 @@
-
 from tensorflow.keras.datasets import mnist
 import numpy
 import random
 from matplotlib import pyplot as plt
 import numba
-# import itertools
+import time
 
 
 
 class Model():
-    def  __init__(self,Iteration,batchsize=512,learning_rate=0.01,momentum=(True,0.5),DLR=True,convolution = True):
+    def  __init__(self,Iteration:int,batchsize=512,learning_rate=0.9,momentum=(True,0.5),convolution = True,alpha=0.1,e = 0.05):
+        assert Iteration>10 ,'Iteration must not less than zero'
+        assert batchsize>0 , 'batch size must lager than zero'
         (self.trainImgs,self.trainlable),(self.testImgs, self.testlable) = mnist.load_data()
         self.trainImgs = self.trainImgs.astype('float32') / 255
         self.testImgs = self.testImgs.astype('float32') / 255
@@ -18,27 +19,23 @@ class Model():
         self.testImgs = self.testImgs.reshape((self.testImgs.shape[0], -1))
         self.Iteration = Iteration
         self.batchsize = batchsize
+        self.e = e
         self.w1 = numpy.random.randn(784,128)/numpy.sqrt(784/2)
         self.w2 = numpy.random.randn(129,10)/numpy.sqrt(129/2)
         self.learning_rate = learning_rate
+        self.alpha = 1
+        self.alpha_change = alpha
         self.history = [0]
         if convolution == True:
-            self.trainImgs = Convolution(self.trainImgs)
-            self.testImgs = Convolution(self.testImgs)
+            self.trainImgs = self.Convolution(self.trainImgs)
+            self.testImgs = self.Convolution(self.testImgs)
         self.HasMomentum = momentum[0]
         self.momentum1 = 0
         self.momentum2 = 0
         self.momentumDecay = momentum[1]
         self.update = True
         self.loss = [0]
-        if DLR == True:
-            self.learning_rate = 0.4
-            self.Decay = 0.94
-            self.Enlarge = 1.05
-        else:
-            self.Decay = 1
-            self.Enlarge = 1
-        print('data loaded')
+
     def one_hot_encoder(self,vector):
         rows = len(vector)
         r = numpy.zeros((rows,10))
@@ -46,6 +43,7 @@ class Model():
             number = vector[row]
             r[row][number] = 1
         return r
+
     def sigmoid(self,num):
         return 1/(1+numpy.exp(-num))
     def softmax(self,x):
@@ -68,9 +66,12 @@ class Model():
             if numbers[k] == TestY[k]:
                 acc += 1
         return acc/5
-    
+
     def Train(self):
-        print('training ')
+        print('Start training')
+        start = time.process_time()
+        sigma1_prev = 0
+        sigma2_prev = 0
         for i in range(self.Iteration):
             randinter = random.randint(1,59000)
             Imgs = self.trainImgs[randinter:randinter+self.batchsize]
@@ -85,33 +86,33 @@ class Model():
             self.cross_entropy(Lables,yp)
             G2 = b1.T @ yd
             G1 = Imgs.T @ bd
-            if self.update:
-                w1_prev = self.w1
-                w2_prev = self.w2
-            self.w2 = self.w2 - (self.learning_rate) * (G2 + self.momentum2) / self.batchsize
-            self.w1 = self.w1 - (self.learning_rate) * (G1 + self.momentum1)/ self.batchsize
+
+            sigma1 = numpy.sqrt(numpy.square(G1*(self.alpha)) + numpy.square((1-self.alpha)*sigma1_prev))
+            sigma2 = numpy.sqrt(numpy.square(G2*(self.alpha)) + numpy.square((1-self.alpha)*sigma2_prev))
+            sigma1_prev = sigma1
+            sigma2_prev = sigma2
+            sigma1 += self.e
+            sigma2 += self.e
+            self.alpha = self.alpha_change
+            self.w2 = self.w2 - ((self.learning_rate)/sigma2) * (G2 + self.momentum2)/ self.batchsize
+            self.w1 = self.w1 - ((self.learning_rate)/sigma1) * (G1 + self.momentum1)/ self.batchsize
             if self.HasMomentum == True:
-                self.momentum1 = (G1)*self.momentumDecay
-                self.momentum2 = (G2)*self.momentumDecay
+                self.momentum1 = (self.momentum1+(G1))*self.momentumDecay
+                self.momentum2 = (self.momentum2+(G2))*self.momentumDecay
             Accuracy = self.Predict_acc()
             self.history.append(Accuracy)
-            if self.history[-1]<self.history[-2]:
-                self.w1 = w1_prev
-                self.w2 = w2_prev
-                self.learning_rate *= self.Decay
-                self.update = False
-            else:
-                self.learning_rate *= self.Enlarge 
-                self.update = True
+            end = time.process_time()
+        print(f'Training done after {end - start:.3f} second with accuracy {self.history[-1]}%')
+        # print(a.shape)
     def Store_weight(self):
         numpy.savetxt("weight11.csv",self.w1,delimiter=",")
         numpy.savetxt("weight21.csv",self.w2,delimiter=",")
-    def Show(self,option):
+    def Show(self,option = 'accuracy'):
         if option=='accuracy':
             yaxis = list(range(0,self.Iteration))
             plt.plot(yaxis,self.history[1:])
             plt.yticks(numpy.arange(0, 100, 5))
-            plt.xticks(numpy.arange(0,self.Iteration+20,20))
+            plt.xticks(numpy.arange(0,self.Iteration,int(self.Iteration/10)))
             plt.grid(True)
             plt.xlabel('Iteration')
             plt.ylabel('Accuracy(%)')
@@ -120,50 +121,54 @@ class Model():
             yaxis = list(range(0,self.Iteration))
             plt.plot(yaxis,self.loss[1:])
             plt.yticks(numpy.arange(0, numpy.max(self.loss), 0.1))
-            plt.xticks(numpy.arange(0,self.Iteration+20,20))
+            plt.xticks(numpy.arange(0,self.Iteration+int(self.Iteration/10),int(self.Iteration/10)))
             plt.grid(True)
             plt.xlabel('Iteration')
             plt.ylabel('Loss')
             plt.show()
     def check(self):
+        digits = [[] for _ in range(10)]
+        for i in range(len(self.testlable)):
+            digits[self.testlable[i]].append(i)
         while True:
-            index = int(input('enter an index:'))
-            if index>1000 or index<0:
-                print('process terminated')
-                break
-            a = self.testImgs[index] @ self.w1
-            b = self.sigmoid(a)
-            b1 = numpy.insert(b,0,1,axis=0)
-            u = b1 @ self.w2
-            yp = self.softmax(u)
-            number = numpy.argmax(yp)
-            plt.imshow(self.testImgs_store[index], cmap=plt.cm.binary)
-            plt.xlabel(f"True digit: {self.testlable[index]}, Pridict number is: {number}")
-            plt.show()
-    
+            index = int(input('enter the digit in range 10:'))
+            if index<10 and index>=0:
+                index = digits[index][random.randint(0,len(digits[index])-1)]
+
+                a = self.testImgs[index] @ self.w1
+                b = self.sigmoid(a)
+                b1 = numpy.insert(b,0,1,axis=0)
+                u = b1 @ self.w2
+                yp = self.softmax(u)
+                number = numpy.argmax(yp)
+                plt.imshow(self.testImgs_store[index], cmap=plt.cm.binary)
+                if number == self.testlable[index]:
+                    plt.xlabel(f"True digit: {self.testlable[index]}, Pridict number is: {number}",color='green')            
+                else :
+                    plt.xlabel(f"True digit: {self.testlable[index]}, Pridict number is: {number}",color='red')            
+                    
+                plt.show()
+
     def cross_entropy(self,y_true, y_pred):
         samples = y_true.shape[0]
         logp = - numpy.log(y_pred[numpy.arange(samples), y_true.argmax(axis=1)])
         lossv = numpy.sum(logp)/samples
         self.loss.append(lossv)
+    @staticmethod
+    @numba.jit
+    def Convolution(Picture):
+        steps = [-29,-28,-27,-1,0,1,27,28,29]
+        kernel = [2,-1,-1,
+                -1,2,-1,
+                -1,-1,2]
+        r = numpy.zeros((Picture.shape[0],784))
+        for index in range(Picture.shape[0]):
+            for i in range(784):
+                for j in range(9):
+                    if i+steps[j]<784 and i+steps[j]>=0:
+                        r[index][i] += Picture[index][i+steps[j]]
+        return r
 
-
-
-
-
-@numba.jit
-def Convolution(Picture):
-    steps = [-29,-28,-27,-1,0,1,27,28,29]
-    kernel = [2,-1,-1,
-            -1,2,-1,
-            -1,-1,2]
-    r = numpy.zeros((Picture.shape[0],784))
-    for index in range(Picture.shape[0]):
-      for i in range(784):
-        for j in range(9):
-          if Inrange(i+steps[j]):
-            r[index][i] += Picture[index][i+steps[j]]
-    return r
-@numba.jit
-def Inrange(index):
-    return index<784 and index >=0
+mod = Model(30,learning_rate=0.9,alpha=0.6,batchsize=512,e=0.05)
+mod.Train()
+mod.Show()
