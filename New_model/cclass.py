@@ -103,7 +103,6 @@ class Model():
             self.history.append(Accuracy)
             end = time.process_time()
         print(f'Training done after {end - start:.3f} second with accuracy {self.history[-1]}%')
-        # print(a.shape)
     def Store_weight(self):
         numpy.savetxt("weight11.csv",self.w1,delimiter=",")
         numpy.savetxt("weight21.csv",self.w2,delimiter=",")
@@ -169,6 +168,3 @@ class Model():
                         r[index][i] += Picture[index][i+steps[j]]
         return r
 
-mod = Model(30,learning_rate=0.9,alpha=0.6,batchsize=512,e=0.05)
-mod.Train()
-mod.Show()
